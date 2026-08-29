@@ -1,0 +1,1261 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>European Roulette</title>
+<style>
+/* ==========================================================================
+   TOKENS
+   ========================================================================== */
+:root {
+  --felt-dark:        #0b3d24;
+  --felt-darker:      #072a19;
+  --wood-dark:        #2b1a10;
+  --wood-mid:         #3f2718;
+  --gold:             #c8a24d;
+  --gold-bright:      #e0c274;
+  --cream:            #f2e6ce;
+  --cream-dim:        #d9cbac;
+  --red:              #9c1f1f;
+  --red-bright:       #b8342f;
+  --black-pocket:     #16140f;
+  --green-pocket:     #0f5c33;
+
+  --font-display: 'Playfair Display', Georgia, 'Times New Roman', serif;
+  --font-body:    'Cormorant Garamond', Georgia, serif;
+  --font-ui:      'Trebuchet MS', 'Segoe UI', sans-serif;
+
+  --shadow-soft: 0 8px 24px rgba(0, 0, 0, 0.45);
+  --shadow-inset: inset 0 2px 6px rgba(0, 0, 0, 0.5);
+}
+
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;900&family=Cormorant+Garamond:wght@500;600&display=swap');
+
+/* ==========================================================================
+   BASE
+   ========================================================================== */
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+}
+
+body {
+  background:
+    radial-gradient(ellipse at top, #143a1f 0%, var(--felt-darker) 60%, #041007 100%);
+  color: var(--cream);
+  font-family: var(--font-body);
+  padding: 24px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ==========================================================================
+   HEADER
+   ========================================================================== */
+.app-header {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.app-header h1 {
+  font-family: var(--font-display);
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  font-size: clamp(28px, 4vw, 42px);
+  color: var(--gold-bright);
+  margin: 0;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+}
+
+.app-subtitle {
+  font-family: var(--font-ui);
+  font-size: 12px;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--cream-dim);
+  margin: 6px 0 0;
+  opacity: 0.75;
+}
+
+/* ==========================================================================
+   LAYOUT
+   ========================================================================== */
+.app-main {
+  display: grid;
+  grid-template-columns: minmax(320px, 560px) minmax(320px, 480px);
+  gap: 32px;
+  justify-content: center;
+  align-items: start;
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
+@media (max-width: 980px) {
+  .app-main {
+    grid-template-columns: 1fr;
+    max-width: 640px;
+  }
+}
+
+.wheel-column,
+.info-column {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ==========================================================================
+   WHEEL
+   ========================================================================== */
+.wheel-wrapper {
+  background:
+    radial-gradient(circle at 50% 40%, #1a0f08 0%, #0c0603 75%, #000 100%);
+  border-radius: 50%;
+  padding: 14px;
+  box-shadow: var(--shadow-soft), 0 0 0 2px #000;
+  max-width: 480px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.wheel-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.55));
+}
+
+.wheel-outer-rim {
+  fill: url(#woodGradient);
+  stroke: #1c0f06;
+  stroke-width: 4;
+}
+
+.wheel-rim-bevel {
+  fill: none;
+  stroke: #f4d999;
+  stroke-width: 1;
+  opacity: 0.35;
+}
+
+.rim-diamond {
+  fill: url(#goldGradient);
+  stroke: #4a3115;
+  stroke-width: 0.5;
+}
+
+.wheel-number-ring-bg {
+  fill: url(#greyRingGradient);
+}
+
+.wheel-number-ring-edge {
+  fill: none;
+  stroke: #0c0c0c;
+  stroke-width: 2;
+}
+
+.ball-track {
+  fill: none;
+  stroke: #8a8a8a;
+  stroke-width: 1;
+  opacity: 0.4;
+}
+
+.wheel-spoke {
+  stroke: url(#goldGradient);
+  stroke-width: 1.4;
+  opacity: 0.75;
+}
+
+.wheel-inner-cone {
+  fill: url(#coneGradient);
+  stroke: #1a0d06;
+  stroke-width: 2;
+}
+
+.wheel-hub-ring {
+  fill: none;
+  stroke: var(--gold);
+  stroke-width: 2;
+  opacity: 0.7;
+}
+
+.wheel-hub-center {
+  fill: url(#goldGradient);
+  stroke: #3d2a10;
+  stroke-width: 1.5;
+}
+
+.wheel-hub-highlight {
+  fill: #fff6de;
+  opacity: 0.55;
+}
+
+.pocket-red   { fill: var(--red); }
+.pocket-black { fill: var(--black-pocket); }
+.pocket-green { fill: var(--green-pocket); }
+
+.pocket-divider {
+  stroke: var(--gold);
+  stroke-width: 0.75;
+  opacity: 0.6;
+}
+
+.pocket-number {
+  fill: var(--cream);
+  font-family: var(--font-ui);
+  font-weight: 700;
+  text-anchor: middle;
+  dominant-baseline: middle;
+}
+
+.pocket-highlight {
+  fill: var(--gold-bright);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.pocket-highlight.active {
+  opacity: 0.5;
+}
+
+.ball {
+  fill: url(#ballGradient);
+  stroke: #8a7546;
+  stroke-width: 0.5;
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.6));
+}
+
+/* ==========================================================================
+   SPIN BUTTON
+   ========================================================================== */
+.spin-button {
+  display: block;
+  margin: 4px auto 0;
+  min-width: 220px;
+  padding: 18px 40px;
+  font-family: var(--font-ui);
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  color: var(--cream);
+  background: linear-gradient(180deg, #1a5c37 0%, #0b3d24 60%, #072a19 100%);
+  border: 2px solid var(--gold);
+  border-radius: 10px;
+  box-shadow: var(--shadow-soft), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, opacity 0.2s ease;
+}
+
+.spin-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-soft), 0 0 0 1px var(--gold-bright);
+}
+
+.spin-button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.spin-button:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+/* ==========================================================================
+   RESULT DISPLAY
+   ========================================================================== */
+.result-display {
+  text-align: center;
+  padding: 18px 12px;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(200, 162, 77, 0.4);
+  border-radius: 10px;
+}
+
+.result-label {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  letter-spacing: 0.3em;
+  color: var(--cream-dim);
+  opacity: 0.7;
+}
+
+.result-number-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 14px;
+  margin-top: 6px;
+}
+
+.result-number {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: clamp(44px, 7vw, 64px);
+  color: var(--gold-bright);
+  line-height: 1;
+}
+
+.result-color {
+  font-family: var(--font-ui);
+  font-size: 15px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  padding: 4px 12px;
+  border-radius: 4px;
+}
+
+.result-color.red   { background: var(--red); color: var(--cream); }
+.result-color.black { background: var(--black-pocket); color: var(--cream); }
+.result-color.green { background: var(--green-pocket); color: var(--cream); }
+
+/* ==========================================================================
+   HISTORY
+   ========================================================================== */
+.panel-label {
+  display: block;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  letter-spacing: 0.25em;
+  color: var(--gold);
+  opacity: 0.85;
+  margin-bottom: 10px;
+}
+
+.history-panel {
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(200, 162, 77, 0.3);
+  border-radius: 10px;
+  padding: 14px 16px;
+}
+
+.history-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.history-chip {
+  min-width: 30px;
+  height: 30px;
+  padding: 0 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--cream);
+}
+
+.history-chip.red   { background: var(--red); }
+.history-chip.black { background: var(--black-pocket); border: 1px solid #3a3527; }
+.history-chip.green { background: var(--green-pocket); }
+
+/* ==========================================================================
+   ROULETTE TABLE (display only)
+   ========================================================================== */
+.roulette-table {
+  background: linear-gradient(180deg, var(--felt-dark), var(--felt-darker));
+  border: 6px solid var(--wood-dark);
+  outline: 2px solid var(--gold);
+  outline-offset: -8px;
+  border-radius: 6px;
+  padding: 16px;
+  display: flex;
+  gap: 10px;
+  align-items: stretch;
+}
+
+.table-zero {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  transform: rotate(180deg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--green-pocket);
+  border: 1px solid var(--gold);
+  border-radius: 4px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 20px;
+  color: var(--cream);
+  min-width: 34px;
+  padding: 6px 2px;
+}
+
+.table-grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+}
+
+.table-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 2 / 1;
+  border: 1px solid rgba(200, 162, 77, 0.35);
+  border-radius: 3px;
+  font-family: var(--font-ui);
+  font-weight: 700;
+  font-size: clamp(12px, 1.6vw, 16px);
+  color: var(--cream);
+}
+
+.table-cell.red   { background: rgba(156, 31, 31, 0.55); }
+.table-cell.black { background: rgba(0, 0, 0, 0.4); }
+
+/* ==========================================================================
+   STATS PANEL
+   ========================================================================== */
+.stats-panel {
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(200, 162, 77, 0.3);
+  border-radius: 10px;
+  padding: 16px 18px 20px;
+}
+
+.stats-summary {
+  margin-bottom: 14px;
+}
+
+.stat-box {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 10px 14px;
+  background: rgba(200, 162, 77, 0.08);
+  border: 1px solid rgba(200, 162, 77, 0.35);
+  border-radius: 6px;
+}
+
+.stat-box-label {
+  font-family: var(--font-ui);
+  font-size: 12px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--cream-dim);
+}
+
+.stat-box-value {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 22px;
+  color: var(--gold-bright);
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px 20px;
+  margin-bottom: 18px;
+}
+
+@media (max-width: 480px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.stats-group h3 {
+  font-family: var(--font-ui);
+  font-size: 12px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--gold);
+  opacity: 0.85;
+  margin: 0 0 6px;
+  border-bottom: 1px solid rgba(200, 162, 77, 0.25);
+  padding-bottom: 4px;
+}
+
+.stat-line {
+  display: flex;
+  justify-content: space-between;
+  font-size: 15px;
+  padding: 2px 0;
+  color: var(--cream);
+}
+
+.stat-line span:last-child {
+  font-weight: 600;
+  color: var(--gold-bright);
+}
+
+.frequency-panel h3 {
+  font-family: var(--font-ui);
+  font-size: 12px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--gold);
+  opacity: 0.85;
+  margin: 0 0 8px;
+  border-bottom: 1px solid rgba(200, 162, 77, 0.25);
+  padding-bottom: 4px;
+}
+
+.frequency-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(46px, 1fr));
+  gap: 6px;
+}
+
+.frequency-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 2px;
+  border-radius: 4px;
+  background: rgba(200, 162, 77, 0.06);
+  border: 1px solid rgba(200, 162, 77, 0.2);
+}
+
+.frequency-cell .fq-number {
+  font-family: var(--font-ui);
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.frequency-cell .fq-number.red   { color: var(--red-bright); }
+.frequency-cell .fq-number.black { color: var(--cream); }
+.frequency-cell .fq-number.green { color: #3fbf7f; }
+
+.frequency-cell .fq-count {
+  font-size: 11px;
+  color: var(--cream-dim);
+  margin-top: 2px;
+}
+
+/* ==========================================================================
+   TOUCH / IPAD REFINEMENTS
+   ========================================================================== */
+@media (max-width: 980px) and (orientation: portrait) {
+  body {
+    padding: 16px;
+  }
+  .wheel-wrapper {
+    max-width: 380px;
+  }
+}
+
+@media (max-width: 980px) and (orientation: landscape) {
+  .app-main {
+    grid-template-columns: minmax(280px, 380px) 1fr;
+  }
+}
+
+</style>
+</head>
+<body>
+
+  <header class="app-header">
+    <h1>European Roulette</h1>
+    <p class="app-subtitle">Simulation &middot; Private Use Only</p>
+  </header>
+
+  <main class="app-main">
+
+    <!-- ============ WHEEL + RESULT COLUMN ============ -->
+    <section class="wheel-column">
+
+      <div class="wheel-wrapper">
+        <svg id="wheel-svg" viewBox="0 0 500 500" class="wheel-svg" aria-hidden="true">
+          <defs>
+            <radialGradient id="woodGradient" cx="35%" cy="28%" r="80%">
+              <stop offset="0%"  stop-color="#a9723f"></stop>
+              <stop offset="40%" stop-color="#8a5a34"></stop>
+              <stop offset="70%" stop-color="#603619"></stop>
+              <stop offset="100%" stop-color="#33190c"></stop>
+            </radialGradient>
+            <radialGradient id="greyRingGradient" cx="50%" cy="30%" r="75%">
+              <stop offset="0%"  stop-color="#6b6b6b"></stop>
+              <stop offset="55%" stop-color="#3a3a3a"></stop>
+              <stop offset="100%" stop-color="#161616"></stop>
+            </radialGradient>
+            <radialGradient id="coneGradient" cx="36%" cy="30%" r="75%">
+              <stop offset="0%"  stop-color="#8a5636"></stop>
+              <stop offset="45%" stop-color="#552d18"></stop>
+              <stop offset="100%" stop-color="#20100a"></stop>
+            </radialGradient>
+            <radialGradient id="goldGradient" cx="35%" cy="28%" r="75%">
+              <stop offset="0%"  stop-color="#f7e6ae"></stop>
+              <stop offset="40%" stop-color="#dcb968"></stop>
+              <stop offset="75%" stop-color="#a97d33"></stop>
+              <stop offset="100%" stop-color="#5f3f18"></stop>
+            </radialGradient>
+            <radialGradient id="ballGradient" cx="35%" cy="30%" r="75%">
+              <stop offset="0%" stop-color="#ffffff"></stop>
+              <stop offset="60%" stop-color="#f2e6ce"></stop>
+              <stop offset="100%" stop-color="#a8987a"></stop>
+            </radialGradient>
+          </defs>
+
+          <!-- outer wood rim -->
+          <circle cx="250" cy="250" r="248" class="wheel-outer-rim"></circle>
+          <circle cx="250" cy="250" r="238" class="wheel-rim-bevel"></circle>
+          <!-- decorative gold diamonds set into the wood, drawn by JS -->
+          <g id="rim-diamonds"></g>
+          <!-- grey metal ring the numbered pockets sit in -->
+          <circle cx="250" cy="250" r="214" class="wheel-number-ring-bg"></circle>
+          <circle cx="250" cy="250" r="214" class="wheel-number-ring-edge"></circle>
+          <!-- pockets are drawn here by JS -->
+          <g id="wheel-pockets"></g>
+          <!-- ball track -->
+          <circle cx="250" cy="250" r="205" class="ball-track"></circle>
+          <!-- gold spokes from hub to inner cone edge, drawn by JS -->
+          <g id="wheel-spokes"></g>
+          <!-- inner cone -->
+          <circle cx="250" cy="250" r="120" class="wheel-inner-cone"></circle>
+          <circle cx="250" cy="250" r="90" class="wheel-hub-ring"></circle>
+          <circle cx="250" cy="250" r="18" class="wheel-hub-center"></circle>
+          <circle cx="245" cy="245" r="6" class="wheel-hub-highlight"></circle>
+          <!-- the ball, positioned dynamically via JS -->
+          <circle id="ball" cx="250" cy="45" r="7" class="ball"></circle>
+        </svg>
+      </div>
+
+      <button id="spin-button" class="spin-button" type="button">SPIN</button>
+
+      <div class="result-display" id="result-display">
+        <span class="result-label">WINNING NUMBER</span>
+        <div class="result-number-row">
+          <span id="result-number" class="result-number">&mdash;</span>
+          <span id="result-color" class="result-color">&nbsp;</span>
+        </div>
+      </div>
+
+      <div class="history-panel">
+        <span class="panel-label">LAST RESULTS</span>
+        <div id="history-list" class="history-list"></div>
+      </div>
+
+    </section>
+
+    <!-- ============ TABLE + STATS COLUMN ============ -->
+    <section class="info-column">
+
+      <div class="roulette-table" id="roulette-table" aria-hidden="true">
+        <div class="table-zero">0</div>
+        <div class="table-grid" id="table-grid"></div>
+      </div>
+
+      <div class="stats-panel">
+        <span class="panel-label">STATISTICS</span>
+
+        <div class="stats-summary">
+          <div class="stat-box">
+            <span class="stat-box-label">Total Spins</span>
+            <span class="stat-box-value" id="stat-total">0</span>
+          </div>
+        </div>
+
+        <div class="stats-grid">
+
+          <div class="stats-group">
+            <h3>Color</h3>
+            <div class="stat-line"><span>Red</span><span id="stat-red">0</span></div>
+            <div class="stat-line"><span>Black</span><span id="stat-black">0</span></div>
+            <div class="stat-line"><span>Green</span><span id="stat-green">0</span></div>
+          </div>
+
+          <div class="stats-group">
+            <h3>Even / Odd</h3>
+            <div class="stat-line"><span>Even</span><span id="stat-even">0</span></div>
+            <div class="stat-line"><span>Odd</span><span id="stat-odd">0</span></div>
+          </div>
+
+          <div class="stats-group">
+            <h3>Low / High</h3>
+            <div class="stat-line"><span>1&ndash;18</span><span id="stat-low">0</span></div>
+            <div class="stat-line"><span>19&ndash;36</span><span id="stat-high">0</span></div>
+          </div>
+
+          <div class="stats-group">
+            <h3>Dozens</h3>
+            <div class="stat-line"><span>1st 12</span><span id="stat-dozen1">0</span></div>
+            <div class="stat-line"><span>2nd 12</span><span id="stat-dozen2">0</span></div>
+            <div class="stat-line"><span>3rd 12</span><span id="stat-dozen3">0</span></div>
+          </div>
+
+          <div class="stats-group">
+            <h3>Columns</h3>
+            <div class="stat-line"><span>1st column</span><span id="stat-col1">0</span></div>
+            <div class="stat-line"><span>2nd column</span><span id="stat-col2">0</span></div>
+            <div class="stat-line"><span>3rd column</span><span id="stat-col3">0</span></div>
+          </div>
+
+          <div class="stats-group">
+            <h3>Frequency</h3>
+            <div class="stat-line"><span>Most frequent</span><span id="stat-most">&mdash;</span></div>
+            <div class="stat-line"><span>Least frequent</span><span id="stat-least">&mdash;</span></div>
+          </div>
+
+        </div>
+
+        <div class="frequency-panel">
+          <h3>Number Frequency</h3>
+          <div class="frequency-grid" id="frequency-grid"></div>
+        </div>
+
+      </div>
+
+    </section>
+
+  </main>
+
+  <script>
+'use strict';
+
+/* ==========================================================================
+   1. ROULETTE CONFIGURATION
+   ========================================================================== */
+
+// Official European roulette wheel order, starting at 0.
+const WHEEL_ORDER = [
+  0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27,
+  13, 36, 11, 30, 8, 23, 10, 5, 24, 16, 33,
+  1, 20, 14, 31, 9, 22, 18, 29, 7, 28, 12,
+  35, 3, 26
+];
+
+const RED_NUMBERS = new Set([
+  1, 3, 5, 7, 9, 12, 14, 16, 18,
+  19, 21, 23, 25, 27, 30, 32, 34, 36
+]);
+
+const POCKET_COUNT = WHEEL_ORDER.length; // 37
+const SEGMENT_ANGLE = 360 / POCKET_COUNT; // ~9.7297 degrees per pocket
+
+// SVG geometry (matches the viewBox in index.html: 0 0 500 500)
+const WHEEL_CENTER = { x: 250, y: 250 };
+const POCKET_OUTER_RADIUS = 196;
+const POCKET_INNER_RADIUS = 126;
+const NUMBER_LABEL_RADIUS = 161;
+const BALL_TRACK_RADIUS = 205;
+const BALL_REST_RADIUS = 156;
+
+/* ==========================================================================
+   2. RANDOM NUMBER GENERATION
+   ========================================================================== */
+
+/**
+ * Returns a cryptographically secure, uniformly distributed integer
+ * in [0, POCKET_COUNT). Uses rejection sampling against crypto.getRandomValues
+ * so that no value has a higher probability than any other (no modulo bias).
+ */
+function secureRandomPocketIndex() {
+  const range = POCKET_COUNT;
+  const maxUint32 = 0xFFFFFFFF;
+  // Largest multiple of `range` that still fits in a 32-bit unsigned int.
+  const acceptLimit = Math.floor((maxUint32 + 1) / range) * range;
+
+  let value;
+  const buffer = new Uint32Array(1);
+  do {
+    crypto.getRandomValues(buffer);
+    value = buffer[0];
+  } while (value >= acceptLimit);
+
+  return value % range;
+}
+
+/** Draws the winning number for a spin. Called once, before any animation. */
+function drawWinningNumber() {
+  const pocketIndex = secureRandomPocketIndex();
+  return WHEEL_ORDER[pocketIndex];
+}
+
+/* ==========================================================================
+   3. ROULETTE CALCULATIONS
+   ========================================================================== */
+
+function getColor(number) {
+  if (number === 0) return 'green';
+  return RED_NUMBERS.has(number) ? 'red' : 'black';
+}
+
+function getWheelIndex(number) {
+  return WHEEL_ORDER.indexOf(number);
+}
+
+/** Center angle (degrees, 0 = top, clockwise) of the pocket holding `number`. */
+function getPocketCenterAngle(number) {
+  const index = getWheelIndex(number);
+  return index * SEGMENT_ANGLE + SEGMENT_ANGLE / 2;
+}
+
+/** Converts a polar coordinate (angle in degrees, 0 = top, clockwise) to x/y. */
+function polarToCartesian(angleDeg, radius, center = WHEEL_CENTER) {
+  const angleRad = (angleDeg - 0) * (Math.PI / 180);
+  return {
+    x: center.x + radius * Math.sin(angleRad),
+    y: center.y - radius * Math.cos(angleRad)
+  };
+}
+
+function easeOutQuart(t) {
+  return 1 - Math.pow(1 - t, 4);
+}
+
+function easeOutCubic(t) {
+  return 1 - Math.pow(1 - t, 3);
+}
+
+/* ==========================================================================
+   4. WHEEL RENDERING
+   ========================================================================== */
+
+function buildAnnularSectorPath(startAngle, endAngle, innerR, outerR) {
+  const p1 = polarToCartesian(startAngle, outerR);
+  const p2 = polarToCartesian(endAngle, outerR);
+  const p3 = polarToCartesian(endAngle, innerR);
+  const p4 = polarToCartesian(startAngle, innerR);
+  const largeArc = endAngle - startAngle > 180 ? 1 : 0;
+
+  return [
+    `M ${p1.x} ${p1.y}`,
+    `A ${outerR} ${outerR} 0 ${largeArc} 1 ${p2.x} ${p2.y}`,
+    `L ${p3.x} ${p3.y}`,
+    `A ${innerR} ${innerR} 0 ${largeArc} 0 ${p4.x} ${p4.y}`,
+    'Z'
+  ].join(' ');
+}
+
+function renderWheel() {
+  const svgNS = 'http://www.w3.org/2000/svg';
+  const pocketsGroup = document.getElementById('wheel-pockets');
+  pocketsGroup.innerHTML = '';
+
+  WHEEL_ORDER.forEach((number, index) => {
+    const startAngle = index * SEGMENT_ANGLE;
+    const endAngle = startAngle + SEGMENT_ANGLE;
+    const color = getColor(number);
+
+    // Pocket wedge
+    const path = document.createElementNS(svgNS, 'path');
+    path.setAttribute('d', buildAnnularSectorPath(
+      startAngle, endAngle, POCKET_INNER_RADIUS, POCKET_OUTER_RADIUS
+    ));
+    path.setAttribute('class', `pocket-${color}`);
+    path.setAttribute('data-number', String(number));
+    pocketsGroup.appendChild(path);
+
+    // Highlight overlay (activated briefly on the winning pocket)
+    const highlight = document.createElementNS(svgNS, 'path');
+    highlight.setAttribute('d', buildAnnularSectorPath(
+      startAngle, endAngle, POCKET_INNER_RADIUS, POCKET_OUTER_RADIUS
+    ));
+    highlight.setAttribute('class', 'pocket-highlight');
+    highlight.setAttribute('data-number', String(number));
+    highlight.setAttribute('id', `highlight-${number}`);
+    pocketsGroup.appendChild(highlight);
+
+    // Divider line between pockets
+    const dividerOuter = polarToCartesian(startAngle, POCKET_OUTER_RADIUS + 4);
+    const dividerInner = polarToCartesian(startAngle, POCKET_INNER_RADIUS);
+    const divider = document.createElementNS(svgNS, 'line');
+    divider.setAttribute('x1', dividerInner.x);
+    divider.setAttribute('y1', dividerInner.y);
+    divider.setAttribute('x2', dividerOuter.x);
+    divider.setAttribute('y2', dividerOuter.y);
+    divider.setAttribute('class', 'pocket-divider');
+    pocketsGroup.appendChild(divider);
+
+    // Number label, oriented radially (readable from outside the wheel)
+    const centerAngle = startAngle + SEGMENT_ANGLE / 2;
+    const labelPos = polarToCartesian(centerAngle, NUMBER_LABEL_RADIUS);
+    const text = document.createElementNS(svgNS, 'text');
+    text.setAttribute('x', labelPos.x);
+    text.setAttribute('y', labelPos.y);
+    text.setAttribute('class', 'pocket-number');
+    text.setAttribute('font-size', '13');
+    text.setAttribute('transform', `rotate(${centerAngle}, ${labelPos.x}, ${labelPos.y})`);
+    text.textContent = String(number);
+    pocketsGroup.appendChild(text);
+  });
+}
+
+/** Decorative gold diamonds set into the wood rim, purely cosmetic. */
+function renderRimDiamonds() {
+  const svgNS = 'http://www.w3.org/2000/svg';
+  const group = document.getElementById('rim-diamonds');
+  group.innerHTML = '';
+
+  const diamondRadius = 226;
+  const diamondCount = 8;
+  const diamondAngleStep = 360 / diamondCount;
+
+  for (let i = 0; i < diamondCount; i++) {
+    const angle = i * diamondAngleStep;
+    const pos = polarToCartesian(angle, diamondRadius);
+    const rect = document.createElementNS(svgNS, 'rect');
+    rect.setAttribute('x', -6);
+    rect.setAttribute('y', -6);
+    rect.setAttribute('width', 12);
+    rect.setAttribute('height', 12);
+    rect.setAttribute('class', 'rim-diamond');
+    rect.setAttribute('transform', `translate(${pos.x}, ${pos.y}) rotate(45)`);
+    group.appendChild(rect);
+  }
+}
+
+/** Decorative gold spokes radiating from the hub across the inner cone. */
+function renderWheelSpokes() {
+  const svgNS = 'http://www.w3.org/2000/svg';
+  const group = document.getElementById('wheel-spokes');
+  group.innerHTML = '';
+
+  const spokeInnerRadius = 20;
+  const spokeOuterRadius = 118;
+  const spokeCount = 12;
+  const spokeAngleStep = 360 / spokeCount;
+
+  for (let i = 0; i < spokeCount; i++) {
+    const angle = i * spokeAngleStep;
+    const inner = polarToCartesian(angle, spokeInnerRadius);
+    const outer = polarToCartesian(angle, spokeOuterRadius);
+    const line = document.createElementNS(svgNS, 'line');
+    line.setAttribute('x1', inner.x);
+    line.setAttribute('y1', inner.y);
+    line.setAttribute('x2', outer.x);
+    line.setAttribute('y2', outer.y);
+    line.setAttribute('class', 'wheel-spoke');
+    group.appendChild(line);
+  }
+}
+
+function flashWinningPocket(number) {
+  const highlight = document.getElementById(`highlight-${number}`);
+  if (!highlight) return;
+  highlight.classList.add('active');
+  setTimeout(() => highlight.classList.remove('active'), 1400);
+}
+
+/* ==========================================================================
+   5. TABLE RENDERING (display only, not interactive)
+   ========================================================================== */
+
+function renderTable() {
+  const grid = document.getElementById('table-grid');
+  grid.innerHTML = '';
+
+  for (let number = 1; number <= 36; number++) {
+    const cell = document.createElement('div');
+    cell.className = `table-cell ${getColor(number)}`;
+    cell.textContent = String(number);
+    grid.appendChild(cell);
+  }
+}
+
+/* ==========================================================================
+   6. BALL ANIMATION
+   ========================================================================== */
+
+function positionBall(angleDeg, radius) {
+  const ball = document.getElementById('ball');
+  const pos = polarToCartesian(angleDeg, radius);
+  ball.setAttribute('cx', pos.x);
+  ball.setAttribute('cy', pos.y);
+}
+
+/**
+ * Animates the ball to its final resting position for `winningNumber`.
+ * The wheel itself never rotates, so the target angle is fixed and exact:
+ * this guarantees the ball always lands on the number that was already
+ * drawn by drawWinningNumber(), with no possibility of visual/logical drift.
+ */
+function animateBallToResult(winningNumber, onComplete) {
+  const targetAngle = getPocketCenterAngle(winningNumber);
+
+  // Purely cosmetic randomness: how many extra full laps the ball makes.
+  // This does NOT influence which number wins, only how the spin looks.
+  const extraLaps = 8 + Math.floor(Math.random() * 4); // 8–11 laps
+  const totalSweep = extraLaps * 360 + targetAngle;
+  const duration = 5200 + Math.random() * 700; // ms, cosmetic variety only
+
+  const settlePhaseStart = 0.65; // fraction of duration when ball starts dropping inward
+
+  const startTime = performance.now();
+
+  function frame(now) {
+    const rawT = (now - startTime) / duration;
+    const t = Math.min(rawT, 1);
+    const angle = totalSweep * easeOutQuart(t);
+
+    let radius = BALL_TRACK_RADIUS;
+    if (t >= settlePhaseStart) {
+      const localT = (t - settlePhaseStart) / (1 - settlePhaseStart);
+      const settle = easeOutCubic(localT);
+      radius = BALL_TRACK_RADIUS + (BALL_REST_RADIUS - BALL_TRACK_RADIUS) * settle;
+      const wobbleAmplitude = (1 - localT) * 7; // decays to 0 by the end
+      radius += Math.sin(localT * Math.PI * 6) * wobbleAmplitude;
+    }
+
+    positionBall(angle, radius);
+
+    if (rawT < 1) {
+      requestAnimationFrame(frame);
+    } else {
+      // Snap to the exact, deterministic final position.
+      positionBall(targetAngle, BALL_REST_RADIUS);
+      onComplete();
+    }
+  }
+
+  requestAnimationFrame(frame);
+}
+
+/* ==========================================================================
+   7 + 8. RESULT HANDLING & HISTORY
+   ========================================================================== */
+
+const state = {
+  history: [],           // array of numbers, newest last
+  isSpinning: false,
+  frequency: new Array(37).fill(0)
+};
+
+const STORAGE_KEY = 'roulette-history-v1';
+
+function loadHistoryFromStorage() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) {
+      parsed.forEach((n) => {
+        if (Number.isInteger(n) && n >= 0 && n <= 36) {
+          state.history.push(n);
+          state.frequency[n] += 1;
+        }
+      });
+    }
+  } catch (err) {
+    console.warn('Could not restore history from localStorage:', err);
+  }
+}
+
+function saveHistoryToStorage() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state.history));
+  } catch (err) {
+    console.warn('Could not save history to localStorage:', err);
+  }
+}
+
+function recordResult(number) {
+  state.history.push(number);
+  state.frequency[number] += 1;
+  saveHistoryToStorage();
+}
+
+function showResult(number) {
+  const color = getColor(number);
+  const numberEl = document.getElementById('result-number');
+  const colorEl = document.getElementById('result-color');
+
+  numberEl.textContent = String(number);
+  colorEl.textContent = color.toUpperCase();
+  colorEl.className = `result-color ${color}`;
+}
+
+function renderHistory() {
+  const list = document.getElementById('history-list');
+  list.innerHTML = '';
+
+  // Newest first, as specified.
+  const reversed = [...state.history].reverse();
+  reversed.forEach((number) => {
+    const chip = document.createElement('div');
+    chip.className = `history-chip ${getColor(number)}`;
+    chip.textContent = String(number);
+    list.appendChild(chip);
+  });
+}
+
+/* ==========================================================================
+   9. STATISTICS
+   ========================================================================== */
+
+function computeStatistics() {
+  const stats = {
+    total: state.history.length,
+    red: 0, black: 0, green: 0,
+    even: 0, odd: 0,
+    low: 0, high: 0,
+    dozen1: 0, dozen2: 0, dozen3: 0,
+    col1: 0, col2: 0, col3: 0
+  };
+
+  state.history.forEach((number) => {
+    const color = getColor(number);
+    stats[color] += 1;
+
+    if (number === 0) {
+      // 0 is deliberately excluded from even/odd, low/high, dozens, columns.
+      return;
+    }
+
+    if (number % 2 === 0) stats.even += 1;
+    else stats.odd += 1;
+
+    if (number >= 1 && number <= 18) stats.low += 1;
+    else stats.high += 1;
+
+    if (number <= 12) stats.dozen1 += 1;
+    else if (number <= 24) stats.dozen2 += 1;
+    else stats.dozen3 += 1;
+
+    const columnRemainder = number % 3;
+    if (columnRemainder === 1) stats.col1 += 1;
+    else if (columnRemainder === 2) stats.col2 += 1;
+    else stats.col3 += 1;
+  });
+
+  return stats;
+}
+
+function computeFrequencyExtremes() {
+  if (state.history.length === 0) {
+    return { most: [], least: [] };
+  }
+
+  const maxCount = Math.max(...state.frequency);
+
+  // Only numbers that have actually appeared are eligible for "least frequent".
+  const seenCounts = state.frequency.filter((count) => count > 0);
+  const minSeenCount = seenCounts.length ? Math.min(...seenCounts) : 0;
+
+  const most = [];
+  const least = [];
+  state.frequency.forEach((count, number) => {
+    if (count === maxCount && maxCount > 0) most.push(number);
+    if (count === minSeenCount && minSeenCount > 0) least.push(number);
+  });
+
+  return { most, least };
+}
+
+/* ==========================================================================
+   10. UI UPDATES
+   ========================================================================== */
+
+function renderFrequencyGrid() {
+  const grid = document.getElementById('frequency-grid');
+  grid.innerHTML = '';
+
+  for (let number = 0; number <= 36; number++) {
+    const cell = document.createElement('div');
+    cell.className = 'frequency-cell';
+
+    const numberEl = document.createElement('span');
+    numberEl.className = `fq-number ${getColor(number)}`;
+    numberEl.textContent = String(number);
+
+    const countEl = document.createElement('span');
+    countEl.className = 'fq-count';
+    countEl.textContent = String(state.frequency[number]);
+
+    cell.appendChild(numberEl);
+    cell.appendChild(countEl);
+    grid.appendChild(cell);
+  }
+}
+
+function formatNumberList(numbers) {
+  if (numbers.length === 0) return '—';
+  return numbers.join(', ');
+}
+
+function updateStatisticsDisplay() {
+  const stats = computeStatistics();
+  const extremes = computeFrequencyExtremes();
+
+  document.getElementById('stat-total').textContent = stats.total;
+
+  document.getElementById('stat-red').textContent = stats.red;
+  document.getElementById('stat-black').textContent = stats.black;
+  document.getElementById('stat-green').textContent = stats.green;
+
+  document.getElementById('stat-even').textContent = stats.even;
+  document.getElementById('stat-odd').textContent = stats.odd;
+
+  document.getElementById('stat-low').textContent = stats.low;
+  document.getElementById('stat-high').textContent = stats.high;
+
+  document.getElementById('stat-dozen1').textContent = stats.dozen1;
+  document.getElementById('stat-dozen2').textContent = stats.dozen2;
+  document.getElementById('stat-dozen3').textContent = stats.dozen3;
+
+  document.getElementById('stat-col1').textContent = stats.col1;
+  document.getElementById('stat-col2').textContent = stats.col2;
+  document.getElementById('stat-col3').textContent = stats.col3;
+
+  document.getElementById('stat-most').textContent = formatNumberList(extremes.most);
+  document.getElementById('stat-least').textContent = formatNumberList(extremes.least);
+
+  renderFrequencyGrid();
+}
+
+function setSpinningState(isSpinning) {
+  state.isSpinning = isSpinning;
+  const button = document.getElementById('spin-button');
+  button.disabled = isSpinning;
+  button.textContent = isSpinning ? 'SPINNING…' : 'SPIN';
+}
+
+/* ==========================================================================
+   SPIN ORCHESTRATION
+   ========================================================================== */
+
+function handleSpin() {
+  if (state.isSpinning) return;
+
+  setSpinningState(true);
+
+  // The result is determined here, BEFORE any animation runs.
+  const winningNumber = drawWinningNumber();
+
+  animateBallToResult(winningNumber, () => {
+    recordResult(winningNumber);
+    showResult(winningNumber);
+    renderHistory();
+    updateStatisticsDisplay();
+    flashWinningPocket(winningNumber);
+    setSpinningState(false);
+  });
+}
+
+/* ==========================================================================
+   INITIALIZATION
+   ========================================================================== */
+
+function init() {
+  loadHistoryFromStorage();
+  renderWheel();
+  renderRimDiamonds();
+  renderWheelSpokes();
+  renderTable();
+  positionBall(0, BALL_TRACK_RADIUS);
+  renderHistory();
+  updateStatisticsDisplay();
+
+  document.getElementById('spin-button').addEventListener('click', handleSpin);
+}
+
+document.addEventListener('DOMContentLoaded', init);
+
+</script>
+</body>
+</html>
